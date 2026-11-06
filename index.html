@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#30343b">
+  <meta name="description" content="A Game Maker 5 inspired game editor for the browser, powered by JavaScript.">
+  <title>GameTsukuru JS — Untitled</title>
+  <script>document.documentElement.dataset.theme = 'dark'; try { if (localStorage.getItem('gametsukuru-js-theme') === 'light') delete document.documentElement.dataset.theme; } catch {}</script>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="editors.css">
+  <link rel="stylesheet" href="visual.css?v=20261106-wav-mime">
+  <link rel="stylesheet" href="path-code.css">
+  <link rel="stylesheet" href="language.css">
+  <link rel="stylesheet" href="dark.css?v=20261106-wav-mime">
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <header class="app-titlebar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">✦</span><span>GameTsukuru <b>JS</b></span></div>
+      <div class="project-title"><span id="projectName">Untitled game</span><span id="dirtyMark"></span></div>
+      <div class="title-actions"><span class="edition">WEB EDITION</span><button id="helpTop" title="Help" aria-label="Help">?</button></div>
+    </header>
+
+    <nav class="menu-bar" aria-label="Main menu">
+      <div class="menu-wrap"><button class="menu-trigger" data-menu="file">File</button><div class="menu-popover" id="menu-file">
+        <button data-command="new">New project <kbd>Ctrl N</kbd></button><button data-command="open">Open project… <kbd>Ctrl O</kbd></button><button data-command="save">Save project <kbd>Ctrl S</kbd></button><button data-command="export">Export JSON…</button><button data-command="export-game">Export playable HTML…</button><hr><button data-command="sample">Load sample game</button>
+      </div></div>
+      <div class="menu-wrap"><button class="menu-trigger" data-menu="edit">Edit</button><div class="menu-popover" id="menu-edit">
+        <button data-command="duplicate">Duplicate selected</button><button data-command="rename">Rename selected</button><button data-command="delete">Delete selected <kbd>Del</kbd></button>
+      </div></div>
+      <div class="menu-wrap"><button class="menu-trigger" data-menu="add">Add</button><div class="menu-popover" id="menu-add">
+        <button data-add="sprites">Sprite</button><button data-add="sounds">Sound</button><button data-add="backgrounds">Background</button><button data-add="paths">Path</button><button data-add="scripts">Script</button><button data-add="objects">Object</button><button data-add="rooms">Room</button>
+      </div></div>
+      <button class="menu-direct" data-command="run">Run</button><button class="menu-direct" data-command="stop">Stop</button>
+      <div class="menu-wrap"><button class="menu-trigger" data-menu="window">Window</button><div class="menu-popover" id="menu-window"><button data-command="show-all">Show all resources</button><button data-command="close-all">Close windows</button><hr><button id="themeToggle" data-command="theme" type="button" aria-pressed="false">Dark mode</button></div></div>
+      <button class="menu-direct" data-command="help">Help</button><button class="menu-direct" id="changeLanguage" type="button">Language</button>
+    </nav>
+
+    <div class="toolbar" role="toolbar" aria-label="Project tools">
+      <button class="tool" data-command="new" title="New project"><span>▤</span></button>
+      <button class="tool" data-command="open" title="Open project"><span>📂</span></button>
+      <button class="tool" data-command="save" title="Save project"><span>💾</span></button>
+      <span class="tool-separator"></span>
+      <button class="tool run-tool" data-command="run" title="Run game (F5)"><span>▶</span></button>
+      <button class="tool stop-tool" data-command="stop" title="Stop game"><span>■</span></button>
+      <span class="tool-separator"></span>
+      <button class="tool" data-add="sprites" title="Create sprite"><span>▧</span></button>
+      <button class="tool" data-add="objects" title="Create object"><span>◆</span></button>
+      <button class="tool" data-add="rooms" title="Create room"><span>▦</span></button>
+      <button class="tool" data-add="scripts" title="Create script"><span>{ }</span></button>
+      <span class="tool-spacer"></span>
+      <span class="autosave-label"><span class="status-dot"></span> Saved in this browser</span>
+      <button class="toolbar-help" data-command="help" title="Help">?</button>
+    </div>
+
+    <div class="editor-shell">
+      <aside class="resource-pane" aria-label="Resources">
+        <div class="pane-heading"><span>RESOURCES</span><button id="collapseTree" title="Collapse resource panel">‹</button></div>
+        <div class="resource-filter"><span>⌕</span><input id="resourceSearch" placeholder="Find a resource" aria-label="Find a resource"></div>
+        <div id="resourceTree" class="resource-tree"></div>
+        <div class="resource-footer"><button id="addResourceButton">＋ Add resource</button></div>
+      </aside>
+      <main id="workspace" class="workspace" aria-label="Editor workspace">
+        <div class="workspace-watermark" aria-hidden="true">GAMETsukuru <span>JS</span></div>
+        <div id="windowLayer" class="window-layer"></div>
+        <div id="emptyHint" class="empty-hint" hidden><span>✦</span><h2>Your workspace is ready</h2><p>Choose a resource in the left panel to edit it.</p><button data-command="sample">Explore the sample game</button></div>
+      </main>
+    </div>
+    <footer class="status-bar"><span id="statusText">Ready</span><span id="statusRight">JavaScript game editor · F5 to play</span></footer>
+  </div>
+
+  <div id="gameOverlay" class="game-overlay" hidden>
+    <div class="game-dialog" role="dialog" aria-modal="true" aria-label="Game preview">
+      <div class="game-dialog-bar"><span><span class="live-dot"></span> GAME PREVIEW <small id="gameRoomName"></small></span><div><button id="restartGame" title="Restart">↻ Restart</button><button id="closeGame" title="Close preview">✕</button></div></div>
+      <div class="game-canvas-wrap"><div class="game-stage"><canvas id="gameCanvas" width="640" height="480" tabindex="0"></canvas><div id="on_screen_controls" class="on-screen-controls" aria-label="Touchscreen controls" hidden></div></div></div>
+      <div class="game-dialog-foot"><span>Arrow keys / WASD to move · Click inside the game to focus</span><span id="gameError"></span></div>
+    </div>
+  </div>
+
+  <div id="modalOverlay" class="modal-overlay" hidden><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><h2 id="modalTitle"></h2><div id="modalBody"></div><div id="modalActions" class="modal-actions"></div></div></div>
+  <div id="languageOverlay" class="modal-overlay language-overlay" hidden><div class="modal language-dialog" role="dialog" aria-modal="true" aria-labelledby="languageTitle"><h2 id="languageTitle">Choose your language / Elige tu idioma / 言語を選択</h2><div class="language-choices"><button type="button" data-language="en" lang="en">English</button><button type="button" data-language="es" lang="es">Español</button><button type="button" data-language="ja" lang="ja">日本語</button></div></div></div>
+  <input type="file" id="projectFile" accept="application/json,.json" hidden>
+  <input type="file" id="assetFile" accept="image/*,audio/*" hidden>
+  <script src="visual-actions.js?v=20261106-wav-mime" defer></script>
+  <script src="sprite-editor.js" defer></script>
+  <script src="syntax.js" defer></script>
+  <script src="path-editor.js" defer></script>
+  <script src="camera.js" defer></script>
+  <script src="controller-sprites.js" defer></script>
+  <script src="touch-controls.js?v=20261106-control-choice" defer></script>
+  <script src="game-audio.js?v=20261106-wav-mime" defer></script>
+  <script src="exporter.js?v=20261106-wav-mime" defer></script>
+  <script src="app.js?v=20261106-wav-mime" defer></script>
+  <script src="language.js?v=20261106-wav-mime" defer></script>
+</body>
+</html>
